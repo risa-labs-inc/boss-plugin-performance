@@ -1,0 +1,21 @@
+{
+  "manifestVersion": 1,
+  "pluginId": "ai.rever.boss.plugin.dynamic.performance",
+  "displayName": "Performance (Dynamic)",
+  "version": "1.0.0",
+  "apiVersion": "1.0",
+  "mainClass": "ai.rever.boss.plugin.dynamic.performance.PerformanceDynamicPlugin",
+  "type": "panel",
+  "description": "Displays JVM metrics, CPU, memory, and resource counts",
+  "author": "Rever AI",
+  "url": "https://github.com/risa-labs-inc/boss-plugin-performance",
+  "panel": {
+    "position": "left_bottom",
+    "priority": 101
+  },
+  "sandbox": {
+    "maxThreads": 4,
+    "maxRestartAttempts": 3,
+    "heartbeatIntervalMs": 5000
+  }
+}
