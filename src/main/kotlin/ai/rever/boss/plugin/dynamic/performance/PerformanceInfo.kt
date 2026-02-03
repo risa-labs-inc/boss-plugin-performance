@@ -12,8 +12,8 @@ import androidx.compose.material.icons.outlined.Speed
  * Displays JVM metrics, CPU, memory, and resource counts.
  */
 object PerformanceInfo : PanelInfo {
-    override val id = PanelId("dynamic-performance", 15)
-    override val displayName = "Performance (Dynamic)"
+    override val id = PanelId("performance", 15)
+    override val displayName = "Performance"
     override val icon = Icons.Outlined.Speed
     override val defaultSlotPosition = left.bottom
 }
