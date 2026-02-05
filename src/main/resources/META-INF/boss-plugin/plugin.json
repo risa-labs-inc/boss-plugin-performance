@@ -4,6 +4,7 @@
   "displayName": "Performance (Dynamic)",
   "version": "1.0.3",
   "apiVersion": "1.0.3",
+  "minBossVersion": "8.16.22",
   "mainClass": "ai.rever.boss.plugin.dynamic.performance.PerformanceDynamicPlugin",
   "type": "panel",
   "description": "Displays JVM metrics, CPU, memory, and resource counts",
