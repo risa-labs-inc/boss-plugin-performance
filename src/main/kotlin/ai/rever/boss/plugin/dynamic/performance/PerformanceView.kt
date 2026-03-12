@@ -1,6 +1,7 @@
 package ai.rever.boss.plugin.dynamic.performance
 
 import ai.rever.boss.plugin.api.BrowserTabData
+import ai.rever.boss.plugin.api.ChildProcessData
 import ai.rever.boss.plugin.api.EditorTabData
 import ai.rever.boss.plugin.api.GcCollectorData
 import ai.rever.boss.plugin.api.HealthStatusLevel
@@ -40,6 +41,7 @@ import androidx.compose.material.icons.automirrored.outlined.ViewSidebar
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.SaveAlt
+import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material.icons.outlined.Web
@@ -56,7 +58,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -136,6 +140,7 @@ fun PerformanceView(viewModel: PerformanceViewModel) {
                 PerformanceViewModel.Tab.CPU -> CpuTab(snapshot)
                 PerformanceViewModel.Tab.TIMINGS -> TimingsTab(snapshot)
                 PerformanceViewModel.Tab.RESOURCES -> ResourcesTab(snapshot)
+                PerformanceViewModel.Tab.PROCESSES -> ProcessesTab(snapshot)
             }
         }
     }
@@ -1263,5 +1268,185 @@ private fun EditorTabRow(editor: EditorTabData) {
                 )
             }
         }
+    }
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Processes Tab — Out-of-Process Plugin Child JVMs
+// ════════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun ProcessesTab(snapshot: PerformanceSnapshotData?) {
+    if (snapshot == null) {
+        EmptyState("Waiting for process metrics...")
+        return
+    }
+
+    val processes = snapshot.childProcesses
+
+    val processesListState = rememberLazyListState()
+    LazyColumn(
+        state = processesListState,
+        modifier = Modifier
+            .fillMaxSize()
+            .lazyListScrollbar(
+                listState = processesListState,
+                direction = Orientation.Vertical,
+                config = getPanelScrollbarConfig()
+            ),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        // Summary card
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                backgroundColor = BossDarkSurface,
+                elevation = 0.dp,
+                shape = RoundedCornerShape(4.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text("Plugin Processes", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = BossDarkTextPrimary)
+                        Text(
+                            if (processes.isEmpty()) "No out-of-process plugins running"
+                            else "${processes.size} child JVM${if (processes.size > 1) "s" else ""} active",
+                            color = BossDarkTextSecondary, fontSize = 10.sp
+                        )
+                    }
+                    Box(
+                        modifier = Modifier.size(36.dp).background(
+                            if (processes.isEmpty()) BossDarkTextSecondary.copy(alpha = 0.2f)
+                            else BossDarkSuccess.copy(alpha = 0.2f), CircleShape
+                        ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("${processes.size}", fontWeight = FontWeight.Bold, fontSize = 14.sp,
+                            color = if (processes.isEmpty()) BossDarkTextSecondary else BossDarkSuccess)
+                    }
+                }
+            }
+        }
+
+        if (processes.isEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    backgroundColor = BossDarkSurface,
+                    elevation = 0.dp,
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(Icons.Outlined.Memory, contentDescription = null, modifier = Modifier.size(32.dp), tint = BossDarkTextSecondary)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("No Plugin Processes", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = BossDarkTextPrimary)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("Out-of-process plugins will appear here when running in Microkernel Mode with the plugin runtime JAR available",
+                            fontSize = 10.sp, color = BossDarkTextSecondary, modifier = Modifier.widthIn(max = 280.dp),
+                            textAlign = TextAlign.Center)
+                    }
+                }
+            }
+        } else {
+            items(processes, key = { it.processId }) { process ->
+                ProcessCard(process)
+            }
+            // Total memory
+            item {
+                val totalHeap = processes.sumOf { it.heapUsedBytes }
+                val totalThreads = processes.sumOf { it.activeThreads }
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    backgroundColor = BossDarkSurface,
+                    elevation = 0.dp,
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    Row(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("%.1f MB".format(totalHeap / (1024f * 1024f)), fontWeight = FontWeight.Bold, fontSize = 12.sp, color = BossDarkAccent)
+                            Text("Total Heap", fontSize = 10.sp, color = BossDarkTextSecondary)
+                        }
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("$totalThreads", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = BossDarkAccent)
+                            Text("Total Threads", fontSize = 10.sp, color = BossDarkTextSecondary)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProcessCard(process: ChildProcessData) {
+    val stateColor = when (process.state) {
+        "RUNNING" -> BossDarkSuccess
+        "STOPPED", "CRASHED" -> BossDarkError
+        "RESTARTING" -> BossDarkWarning
+        else -> BossDarkTextSecondary
+    }
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        backgroundColor = BossDarkSurface,
+        elevation = 0.dp,
+        shape = RoundedCornerShape(4.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(modifier = Modifier.size(8.dp).background(stateColor, CircleShape))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(process.displayName, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = BossDarkTextPrimary)
+                }
+                Text("PID ${process.pid}", fontSize = 10.sp, color = BossDarkTextSecondary, fontFamily = FontFamily.Monospace)
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Column {
+                    Text("Heap", fontSize = 10.sp, color = BossDarkTextSecondary)
+                    Text("%.1f / %.0f MB".format(process.heapUsedMB, process.heapMaxMB), fontSize = 11.sp, color = BossDarkTextPrimary, fontFamily = FontFamily.Monospace)
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Threads", fontSize = 10.sp, color = BossDarkTextSecondary)
+                    Text("${process.activeThreads}", fontSize = 11.sp, color = BossDarkTextPrimary, fontFamily = FontFamily.Monospace)
+                }
+                Column(horizontalAlignment = Alignment.End) {
+                    Text("Uptime", fontSize = 10.sp, color = BossDarkTextSecondary)
+                    Text(formatUptime(process.uptimeMs), fontSize = 11.sp, color = BossDarkTextPrimary, fontFamily = FontFamily.Monospace)
+                }
+            }
+            if (process.heapMaxBytes > 0) {
+                Spacer(modifier = Modifier.height(6.dp))
+                val barColor = when {
+                    process.heapUsagePercent > 90 -> BossDarkError
+                    process.heapUsagePercent > 75 -> BossDarkWarning
+                    else -> BossDarkAccent
+                }
+                Box(modifier = Modifier.fillMaxWidth().height(4.dp).background(BossDarkBorder, RoundedCornerShape(2.dp))) {
+                    Box(modifier = Modifier.fillMaxWidth((process.heapUsagePercent / 100f).coerceIn(0f, 1f)).fillMaxHeight().background(barColor, RoundedCornerShape(2.dp)))
+                }
+            }
+            if (process.restartCount > 0) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("Restarted ${process.restartCount}x", fontSize = 10.sp, color = BossDarkWarning)
+            }
+        }
+    }
+}
+
+private fun formatUptime(ms: Long): String {
+    val seconds = ms / 1000
+    val minutes = seconds / 60
+    val hours = minutes / 60
+    return when {
+        hours > 0 -> "${hours}h ${minutes % 60}m"
+        minutes > 0 -> "${minutes}m ${seconds % 60}s"
+        else -> "${seconds}s"
     }
 }

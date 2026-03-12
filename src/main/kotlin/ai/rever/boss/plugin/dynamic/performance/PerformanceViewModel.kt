@@ -37,7 +37,8 @@ class PerformanceViewModel(
         MEMORY("Heap & Pools"),
         CPU("CPU & Threads"),
         TIMINGS("GC Timings"),
-        RESOURCES("Resources")
+        RESOURCES("Resources"),
+        PROCESSES("Processes")
     }
 
     private val _selectedTab = MutableStateFlow(Tab.OVERVIEW)
