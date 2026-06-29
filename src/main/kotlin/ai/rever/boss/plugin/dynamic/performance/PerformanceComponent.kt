@@ -4,6 +4,7 @@ import ai.rever.boss.plugin.api.FileOpenCallback
 import ai.rever.boss.plugin.api.PanelComponentWithUI
 import ai.rever.boss.plugin.api.PanelInfo
 import ai.rever.boss.plugin.api.PerformanceDataProvider
+import ai.rever.boss.plugin.ui.BossTheme
 import androidx.compose.runtime.Composable
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.Lifecycle.Callbacks
@@ -33,6 +34,8 @@ class PerformanceComponent(
 
     @Composable
     override fun Content() {
-        PerformanceView(viewModel)
+        BossTheme {
+            PerformanceView(viewModel)
+        }
     }
 }

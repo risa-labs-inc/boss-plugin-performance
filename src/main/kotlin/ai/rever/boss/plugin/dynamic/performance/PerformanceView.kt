@@ -12,15 +12,7 @@ import ai.rever.boss.plugin.api.TerminalData
 import ai.rever.boss.plugin.api.ThreadData
 import ai.rever.boss.plugin.scrollbar.getPanelScrollbarConfig
 import ai.rever.boss.plugin.scrollbar.lazyListScrollbar
-import ai.rever.boss.plugin.ui.BossDarkAccent
-import ai.rever.boss.plugin.ui.BossDarkBackground
-import ai.rever.boss.plugin.ui.BossDarkBorder
-import ai.rever.boss.plugin.ui.BossDarkError
-import ai.rever.boss.plugin.ui.BossDarkSuccess
-import ai.rever.boss.plugin.ui.BossDarkSurface
-import ai.rever.boss.plugin.ui.BossDarkTextPrimary
-import ai.rever.boss.plugin.ui.BossDarkTextSecondary
-import ai.rever.boss.plugin.ui.BossDarkWarning
+import ai.rever.boss.plugin.ui.BossThemeColors
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -64,6 +56,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
+// Reactive BOSS theme tokens. Using property getters (not vals) so each read picks
+// up the host's current theme, letting the panel re-skin on a theme switch.
+private val BossDarkBackground: Color get() = BossThemeColors.BackgroundColor
+private val BossDarkSurface: Color get() = BossThemeColors.SurfaceColor
+private val BossDarkBorder: Color get() = BossThemeColors.BorderColor
+private val BossDarkError: Color get() = BossThemeColors.ErrorColor
+private val BossDarkSuccess: Color get() = BossThemeColors.SuccessColor
+private val BossDarkTextPrimary: Color get() = BossThemeColors.TextPrimary
+private val BossDarkTextSecondary: Color get() = BossThemeColors.TextSecondary
+private val BossDarkWarning: Color get() = BossThemeColors.WarningColor
+private val BossDarkAccent: Color get() = BossThemeColors.AccentColor
 
 /**
  * Performance panel view with tabs.
@@ -248,9 +252,9 @@ private fun OverviewTab(
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                     modifier = Modifier.height(28.dp)
                 ) {
-                    Icon(Icons.Default.Delete, "GC", modifier = Modifier.size(14.dp), tint = Color.White)
+                    Icon(Icons.Default.Delete, "GC", modifier = Modifier.size(14.dp), tint = BossThemeColors.TextPrimary)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Request GC", color = Color.White, fontSize = 11.sp)
+                    Text("Request GC", color = BossThemeColors.TextPrimary, fontSize = 11.sp)
                 }
 
                 Button(
