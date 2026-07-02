@@ -24,5 +24,7 @@ class PerformanceDynamicPlugin : DynamicPlugin {
         context.panelRegistry.registerPanel(PerformanceInfo) { ctx, panelInfo ->
             PerformanceComponent(ctx, panelInfo, dataProvider, null)
         }
+        // Contribute performance_snapshot/gc MCP tools; auto-removed on disable/unload.
+        context.registerMcpToolProvider(PerformanceMcpToolProvider(pluginId, dataProvider))
     }
 }
