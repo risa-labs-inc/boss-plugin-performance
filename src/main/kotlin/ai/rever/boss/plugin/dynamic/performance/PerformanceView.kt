@@ -84,11 +84,12 @@ fun PerformanceView(viewModel: PerformanceViewModel) {
             .fillMaxSize()
             .background(BossDarkBackground)
     ) {
-        // Tab bar
-        TabRow(
+        // Tab bar (scrollable: eight tabs don't fit a fixed row in a side panel)
+        ScrollableTabRow(
             selectedTabIndex = selectedTab.ordinal,
             backgroundColor = BossDarkBackground,
             contentColor = BossDarkAccent,
+            edgePadding = 0.dp,
             modifier = Modifier.height(32.dp)
         ) {
             PerformanceViewModel.Tab.entries.forEach { tab ->
@@ -145,6 +146,12 @@ fun PerformanceView(viewModel: PerformanceViewModel) {
                 PerformanceViewModel.Tab.TIMINGS -> TimingsTab(snapshot)
                 PerformanceViewModel.Tab.RESOURCES -> ResourcesTab(snapshot)
                 PerformanceViewModel.Tab.PROCESSES -> ProcessesTab(snapshot)
+                PerformanceViewModel.Tab.NETWORK -> {
+                    val networkSnapshot by viewModel.networkSnapshot.collectAsState()
+                    val networkRateHistory by viewModel.networkRateHistory.collectAsState()
+                    NetworkTab(networkSnapshot, networkRateHistory)
+                }
+                PerformanceViewModel.Tab.PLUGINS -> PluginsTab(viewModel)
             }
         }
     }

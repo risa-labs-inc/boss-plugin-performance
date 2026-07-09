@@ -17,10 +17,12 @@ class PerformanceComponent(
     ctx: ComponentContext,
     override val panelInfo: PanelInfo,
     private val dataProvider: PerformanceDataProvider,
-    private val fileOpenCallback: FileOpenCallback?
+    private val fileOpenCallback: FileOpenCallback?,
+    private val networkSampler: NetworkSampler? = null,
+    private val probeService: PluginProbeService? = null
 ) : PanelComponentWithUI, ComponentContext by ctx {
 
-    private val viewModel = PerformanceViewModel(dataProvider, fileOpenCallback)
+    private val viewModel = PerformanceViewModel(dataProvider, fileOpenCallback, networkSampler, probeService)
 
     init {
         lifecycle.subscribe(
